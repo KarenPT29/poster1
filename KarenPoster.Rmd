@@ -1,0 +1,175 @@
+---
+main_topsize: 0.08 
+main_bottomsize: 0.05
+#ESSENTIALS
+title: '**Internet Access and Freedom**'
+author:
+  - name: '**Karen Perez Torres**'
+    main: true
+    email: karenpt@american.edu
+affiliation:
+    address: SIS, American University
+main_findings: "Did an increase of access to the internet create a freer world?"
+primary_colour: "#0063B2FF"
+secondary_colour: "#9CC3D5FF"
+accent_colour: "#cc0000"
+output: 
+  posterdown::posterdown_betterport:
+    self_contained: true
+    pandoc_args: --mathjax
+    number_sections: false
+bibliography: packages.bib
+link-citations: true
+---
+
+```{r, include=FALSE}
+  library(tidyverse)
+  library(knitr)
+  library(ggplot2)
+  library(modelsummary)
+  library(gt)
+freedom <- read.csv("CleanFreedom.csv")
+view(freedom)
+```
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    comment = NA,
+    message = FALSE, 
+    warning = FALSE,
+    fig.align = 'center'
+  )
+  options(modelsummary_factory_default = "gt")
+```
+
+# Introduction
+
+The Internet has caused massive shifts in the way that people access and consume information, and many believe it would be a force for freedom and positive change around the world. 
+
+I have evaluated changes in Internet Access and Freedom from 2013 to 2021, to see what kind of impact the Internet may have had. I have also included another possible explanatory factor, GDP per Capita, to better evaluate the Internet effects.
+```{r, include=FALSE}
+knitr::write_bib(c('posterdown', 'rmarkdown','pagedown'), 'packages.bib')
+```
+
+## Objectives
+
+1. Understand Differences in Regions Around the World
+2. Run a Regression Analysis of Internet Access and Freedom
+
+# Methodology
+
+I combined three datasets:
+
+1. Freedom House 2013-2023 Index: https://freedomhouse.org/report/freedom-world. 
+The aggregate freedom metric is a combination of various sub-metrics, such as freedom of expression, rule of law, and personal autonomy.
+
+2. World Bank 1960-2022 on Internet Use: https://data.worldbank.org/indicator/IT.NET.USER.ZS
+This is measured by the World Bank, as Individuals using the Internet (% of population) in each country. 
+
+3. World Bank 1960-2022 on GDP per Capita: https://data.worldbank.org/indicator/NY.GDP.PCAP.CD
+GDP per Capita is equal to the annual GDP of a country, divided by the population in that year, normalized to the current US dollar.
+
+Countries with missing data were eliminated from the dataset, and a comparative change over time was calculated from 2013-2021 to make the data comparable to each other.
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+# Data Exploration
+
+First let's take a look at how Freedom scores have changed by region from 2013 to 2021, and examine how Internet Access and GDP per Capita have also seen changes.
+
+```{r out.width="80%"}
+filter(freedom) |>  
+    ggplot(aes(y = fchange, x = Region, color = Region)) +
+    geom_boxplot() +
+    theme_minimal() +
+    theme(legend.position="none") +
+    labs(title='Regional Change in Freedom Scores',x="Region",y='Chnage in Score')
+```
+
+Referencing the table below, Asia has seen the smallest declines in freedom scores, at -.09, while Europe has seen the steepest, at -3.44.
+Asia has also seen the largest growth in internet usage, though likely Asia, Eurasia, and Africa had more catching up to do, while Europe's GDP per Capita saw the strongest growth, of almost $7,000, while the Middle East saw declines of near -$4,000 in the eight years measured.
+
+```{r}
+table =
+    freedom |>
+  group_by(Region) |>
+  summarise(
+    FreedomAvg = mean(fchange),
+    InternetAvg = mean(ichange),
+    GDPAvg = mean(gchange))
+
+knitr::kable(table, format = "markdown", digits = 2, align=c(rep('c',times=4)))
+```
+
+# Regression Analysis & Findings
+
+
+A Regression analysis of Change in Internet, Change in GDP per Capita, and Change in Freedom can be found below:
+
+```{r out.width="80%"}
+ggplot(freedom, aes(x=ichange, y=fchange)) +
+  geom_point()+
+  labs(title= "Change in Internet and Freedom from 2013-2021", x = "Change in Internet (%)", y = "Change in Freedom Score") + 
+  geom_smooth(method='lm') +
+  theme_minimal()
+```
+The regression line appears to be near horizontal, indicating that there is no relationship, but we will need to confirm with our models:
+
+
+```{r, include = FALSE} 
+regression = list(
+              Model1 = lm(fchange~ichange, data = freedom),
+              Model2 = lm(fchange~ichange + gchange, data = freedom)
+)
+```
+
+```{r, include=TRUE, out.width="99%"}
+modelsummary(regression, fmt = 5,  gof_map = 'nobs', statistic = NULL, 
+               stars = c('*' = 0.05),
+               title = 'Analysis of Significance'
+             )
+```
+
+```{r, include=FALSE} 
+model3 <- lm(fchange~ichange, data = freedom)
+summary(model3)
+```
+
+```{r, include=FALSE}
+model4 <- lm(fchange~gchange, data = freedom)
+summary(model4)
+```
+
+With a p-value of .488 in Model 1, the association between increases in Internet and increases in Freedom is not significant at any level. If it were significant, it would show that internet access would have a small positive influence on freedom (.03 points per % of internet increase).
+
+For the more complex Model 2, there is still no significance at any threshold between the explanatory factors of increases in Internet or GDP per Capita, and the outcome, Freedom. The model predicts a very small negative association between the two.
+
+
+# Conclusion
+
+As a result, there is no apparent link between increasing access to the Internet and changes in Freedom House scores. There is also lacking evidence for GDP per Capita as an alternate explanatory factor. If it were possible to evaluate this information from an earlier point in the Internet's creation or extend beyond the shadow of COVID for Freedom House, there may yet be other lessons to be learned from this investigation. Other possible explanatory variables to consider could be the type of government, military conflicts, access to capital, access to education, and many others that I hope others explore!  
+
+
